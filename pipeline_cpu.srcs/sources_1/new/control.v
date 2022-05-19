@@ -15,7 +15,6 @@ endmodule
 module mem_control(
     input [5:0] I_opcode,
     input [5:0] I_funct,
-
     output O_reg_write,
     output O_lw,
     output O_sw
@@ -41,6 +40,7 @@ module exe_control(
     output O_nbranch, 
     output O_jal,
     output O_lw,
+    output O_i_minus_format,
     output O_reg_write 
 );
     wire r_format, i_minus_format, branch, nbranch;
@@ -48,12 +48,13 @@ module exe_control(
 
     assign O_aluop = {(r_format | i_minus_format), (branch | nbranch)};
     assign O_regdst = r_format;
-    assign O_alusrc = i_minus_format || sw || lw;
+    assign O_alusrc = i_minus_format | sw | lw;
     assign O_force_jump = jr | jmp | jal;
     assign O_branch = branch;
     assign O_nbranch = nbranch;
     assign O_jal = jal;
     assign O_lw = lw;
+    assign O_i_minus_format = i_minus_format;
 
     instype ity_inst(
         .I_opcode(I_opcode),
@@ -91,7 +92,7 @@ module id_control(
     ) ? 1 : 0;
 
     wire r_format, i_minus_format, branch, nbranch;
-    wire sw, lw, jr, jmp, jal, sftmd;   
+    wire sw, lw, jr, jmp, jal, sftmd;
 
     assign O_jr = jr;
 
@@ -111,20 +112,20 @@ module id_control(
     );
 
     // don't read rs: sll srl sra lui jump jal
-    assign O_read_rs = ~(
+    assign O_read_rs = (
         (r_format && (I_funct == 6'b00_0000 || I_funct == 6'b00_0010 || I_funct == 6'b00_0011)) ||
         (I_opcode == 6'b00_1111) || jmp || jal
-    );
+    ) ? 0 : 1;
 
     // don't read rt: jr lw i_minus_format jump jal
-    assign O_read_rt = ~(
+    assign O_read_rt = (
         jr || lw || i_minus_format || jmp || jal
-    );
+    ) ? 0 : 1;
 endmodule
 
 module instype (
-    input [4:0] I_opcode,
-    input [4:0] I_funct,
+    input [5:0] I_opcode,
+    input [5:0] I_funct,
     output O_r_format,
     output O_i_minus_format,
     output O_lw,

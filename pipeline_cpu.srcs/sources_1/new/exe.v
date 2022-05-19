@@ -24,11 +24,12 @@ module exe(
 
     output O_reg_write,
     output O_is_lw,
-    output O_mem_write_data // 写入data memory的数据 for sw
+    output [31:0] O_mem_write_data // 写入data memory的数据 for sw
 
 );
     wire [1:0] aluop;
     wire alusrc, sftmd, i_minus_format, force_jump, regdst, jal;
+    wire branch, nbranch;
 
     exe_control exe_ctrl_inst(
         .I_opcode(I_opcode),
@@ -42,10 +43,11 @@ module exe(
         .O_nbranch(nbranch),
         .O_jal(jal),
         .O_lw(O_is_lw),
+        .O_i_minus_format(i_minus_format),
         .O_reg_write(O_reg_write)
     );
 
-    assign O_dest_reg = regdst ? I_rd : I_rt;
+    assign O_dest_reg = regdst == 1'b1 ? I_rd : I_rt;
 
     wire [31:0] Ainput, Binput;
     wire [2:0] ALU_ctl;
@@ -118,6 +120,6 @@ module exe(
             Shift_Result = Binput;
     end
 
-    assign O_corr_pred = ~(force_jump || (branch == 1'b1 && Zero == 1'b0) || (nbranch == 1'b1 && Zero == 1'b1));
-    assign O_corr_target = (branch || nbranch) ? O_addr_result : I_jump_target;
+    assign O_corr_pred = (force_jump == 1'b1 || (branch == 1'b1 && Zero == 1'b0) || (nbranch == 1'b1 && Zero == 1'b1)) ? 0 : 1;
+    assign O_corr_target = (branch == 1'b1 || nbranch == 1'b1) ? O_addr_result : I_jump_target;
 endmodule

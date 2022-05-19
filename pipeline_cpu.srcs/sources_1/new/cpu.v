@@ -1,13 +1,22 @@
 `timescale 1ns / 1ps
 module cpu(
     input I_clk_100M,
-    input I_rst
+    input I_rst,
+    input [23:0] I_switches,
+    output [23:0] O_leds
 );
-    // TODO: generate CPU clock
-    wire W_cpu_clk;
+    // TODO: speed up cpu clock
+    wire W_cpu_clk; // 23M
+    cpuclk cpuclk_inst(
+        .clk_in1(I_clk_100M),
+        .clk_out1(W_cpu_clk)
+    );
 
-    reg [31:0] pc; // 输入ifetch的pc 当前pc
-    wire next_pc; // ifetch输出的next pc
+    reg [31:0] pc; // 当前pc,输入ifetch
+    wire [31:0] next_pc; // ifetch输出的next pc, =pc+4
+
+    wire stall, corr_pred;
+    wire [31:0] corr_target;
 
     ifetch ifetch_inst(
         .I_pc(pc),
@@ -16,27 +25,37 @@ module cpu(
 
     always @(negedge W_cpu_clk) begin
         if (I_rst) pc <= 0;
-        else pc <= next_pc;
+        else if (stall)      pc <= pc;
+        else if (~corr_pred) pc <= corr_target;
+        else                 pc <= next_pc;
     end
 
     wire [31:0] instruction;
     instructions_ram instr_ram_inst(
         .clka(W_cpu_clk),
-        .addra(pc[31:2]),
-        .douta(instruction)
+        .addra(pc[15:2]),
+        .douta(instruction),
+        
+        // unused now
+        .dina(31'b0),
+        .wea(1'b0)
     );
 
     reg [31:0] id_in_instruction; // instruction to decoder
+
     always @(negedge W_cpu_clk) begin
-        if (I_rst) id_in_instruction <= 0;
-        else id_in_instruction <= id_in_instruction;
+        if (I_rst)           id_in_instruction <= 0;
+        else if (stall)      id_in_instruction <= id_in_instruction;
+        else if (~corr_pred) id_in_instruction <= 0; // 消除if对id的影响
+        else                 id_in_instruction <= instruction;
     end
 
     reg [31:0] id_in_pc_plus_4;
     wire [31:0] id_out_pc_plus_4;
     always @(negedge W_cpu_clk) begin
-        if (I_rst) id_in_pc_plus_4 <= 0;
-        else id_in_pc_plus_4 <= pc + 4;
+        if (I_rst)      id_in_pc_plus_4 <= 0;
+        else if (stall) id_in_pc_plus_4 <= id_in_pc_plus_4;
+        else            id_in_pc_plus_4 <= pc + 4;
     end
 
     wire rs_can_forward, rt_can_forward;
@@ -50,14 +69,15 @@ module cpu(
     wire [4:0] id_out_shamt;
     wire [31:0] id_out_jump_target;
     wire [5:0] id_out_opcode, id_out_funct;
-    wire stall;
+
+
 
     decoder dec_inst(
         .I_instruction(id_in_instruction),
         .I_rs_can_forward(rs_can_forward),
         .I_rt_can_forward(rt_can_forward),
         .I_rs_should_stall(rs_should_stall),
-        .I_rt_should_stall(rt_should_stal),
+        .I_rt_should_stall(rt_should_stall),
         .I_rs_forward_data(rs_forward_data),
         .I_rt_forward_data(rt_forward_data),
         .I_rs_data(rs_curr_data),
@@ -66,13 +86,13 @@ module cpu(
         .O_rs_data(id_out_rs_data),
         .O_rt_data(id_out_rt_data),
         .I_pc_plus_4(id_in_pc_plus_4),
+        .O_pc_plus_4(id_out_pc_plus_4),
         .O_rs(id_out_rs),
         .O_rt(id_out_rt),
         .O_rd(id_out_rd),
         .O_shamt(id_out_shamt),
-        .O_pc_plus_4(id_out_pc_plus_4),
         .O_opcode(id_out_opcode),
-        .O_funct(id_out_opcode),
+        .O_funct(id_out_funct),
         .O_should_stall(stall),
         .O_jump_target(id_out_jump_target)
     );
@@ -86,12 +106,19 @@ module cpu(
 
     always @(negedge W_cpu_clk) begin
         if (I_rst) begin
-            // 防止后续写寄存器 内存
+            // sll 防止后续写寄存器 内存
             exe_in_opcode <= 0;
             exe_in_funct <= 0;
             exe_in_shamt <= 0;
             exe_in_rt <= 0;
             exe_in_rd <= 0;
+        end
+        else if (stall || ~corr_pred) begin
+            exe_in_opcode <= 0;
+            exe_in_funct <= 0;
+            exe_in_shamt <= 0;
+            exe_in_rt <= 0;
+            exe_in_rd <= 0; 
         end
         else begin
             exe_in_rs_data <= id_out_rs_data;
@@ -102,8 +129,8 @@ module cpu(
             exe_in_funct <= id_out_funct;
             exe_in_pc_plus_4 <= id_out_pc_plus_4;
             exe_in_jump_target <= id_out_jump_target;
-            exe_in_rt = id_out_rt;
-            exe_in_rd = id_out_rd;
+            exe_in_rt <= id_out_rt;
+            exe_in_rd <= id_out_rd;
         end
     end
 
@@ -112,8 +139,7 @@ module cpu(
     wire [4:0] exe_dest_reg;
     wire exe_reg_write, exe_is_lw;
 
-    wire [31:0] corr_target;
-    wire corr_pred;
+    
 
     exe exe_inst(
         .I_rs_data(exe_in_rs_data),
@@ -136,13 +162,20 @@ module cpu(
         .O_mem_write_data(exe_out_mem_write_data)
     );
 
-    wire mem_reg_write;
-    wire [4:0] mem_dest_reg;
     wire [31:0] mem_out_reg_write_data;
+    wire [4:0] mem_dest_reg;
+    wire [31:0] m_write_data;
+    wire m_write;
+    wire [31:0] m_addr;
+    wire [15:0] io_write_data;
+    wire led_write, led_sel;
 
-    reg [5:0] mem_in_opcode, mem_in_funct;
-    reg [31:0] mem_addr, mem_write_data;
+    wire [31:0] m_read_data;
+
+    reg [31:0] mem_in_addr, mem_in_alu_result;
     reg [4:0] mem_in_dest_reg;
+    reg [5:0] mem_in_opcode, mem_in_funct;
+    reg [31:0] mem_in_write_data;
 
     always @(negedge W_cpu_clk) begin
         if (I_rst) begin
@@ -151,29 +184,56 @@ module cpu(
             mem_in_dest_reg <= 0;
         end
         else begin
+            mem_in_addr <= exe_out_alu_result;
+            mem_in_alu_result <= exe_out_alu_result;
+            mem_in_dest_reg <= exe_dest_reg;
             mem_in_opcode <= exe_in_opcode;
             mem_in_funct <= mem_in_funct;
-            mem_addr <= exe_out_addr_result;
-            mem_write_data <= exe_out_mem_write_data;
-            mem_in_dest_reg <= exe_dest_reg;
+            mem_in_write_data <= exe_out_mem_write_data;
         end
 
     end
 
     mem mem_inst(
-        .I_clk(W_cpu_clk),
-        .I_addr(O_addr_result),
-        .I_write_data(mem_write_data),
+        .I_addr(mem_in_addr),
+        .I_alu_result(mem_in_alu_result),
+        .I_m_read_data(m_read_data),
+        .I_switches_data(I_switches), // TODO
         .O_reg_write_data(mem_out_reg_write_data),
-
-        .O_reg_write(mem_reg_write),
 
         .I_dest_reg(mem_in_dest_reg),
         .O_dest_reg(mem_dest_reg),
 
         .I_opcode(mem_in_opcode),
-        .I_funct(mem_in_funct)
+        .I_funct(mem_in_funct),
+
+        .I_write_data(mem_in_write_data),
+        .O_m_write_data(m_write_data),
+        .O_m_write(m_write),
+        .O_m_addr(m_addr),
+        .O_io_write_data(io_write_data),
+        .O_led_write(led_write),
+        .O_led_sel(led_sel),
+        .O_reg_write(mem_reg_write)
     );
+
+    dmemory dmem_inst(
+        .I_clk(W_cpu_clk),
+        .I_addr(m_addr),
+        .I_write_data(m_write_data),
+        .I_m_write(m_write),
+        .O_read_data(m_read_data)
+    );
+
+    led led_inst(
+        .I_clk(W_cpu_clk),
+        .I_rst(I_rst),
+        .I_write(led_write),
+        .I_sel(led_sel),
+        .I_write_data(io_write_data),
+        .O_led_data(O_leds)
+    );
+
 
     wire wb_reg_write;
     wire [31:0] wb_write_data;

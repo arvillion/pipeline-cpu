@@ -22,6 +22,7 @@ module forward(
     output reg [31:0] O_forward_data
 
 );
+    wire ex_reg_write_not_lw;
     assign ex_reg_write_not_lw = I_ex_reg_write & ~I_ex_is_lw;
 
     always @(*) begin
@@ -36,6 +37,7 @@ module forward(
             O_should_stall = 0;
         end
         else if (I_reg_src == I_ex_dest && I_ex_is_lw) begin
+            O_forward_data = 0;
             O_can_forward = 0;
             O_should_stall = 1;
         end
@@ -50,6 +52,7 @@ module forward(
             O_should_stall = 0;
         end
         else begin
+            O_forward_data = 0;
             O_can_forward = 0;
             O_should_stall = 0;
         end

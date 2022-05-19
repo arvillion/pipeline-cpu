@@ -55,8 +55,8 @@ module decoder(
     assign O_imm_extended = should_signed_ext ? {{16{imm[15]}}, imm} : {{16{1'b0}}, imm};
     assign O_jump_target = jr ? O_rs_data : {I_pc_plus_4[31:28], I_instruction[25:0], 2'b0};
 
-    assign O_should_stall = (read_rs & I_rs_should_stall) &&
-                            (read_rt & I_rt_should_stall);
+    assign O_should_stall = ((read_rs && I_rs_should_stall) ||
+                            (read_rt && I_rt_should_stall)) ? 1 : 0;
 
     assign O_rs_data = I_rs_can_forward ? I_rs_forward_data : I_rs_data;
     assign O_rt_data = I_rt_can_forward ? I_rt_forward_data : I_rt_data;
