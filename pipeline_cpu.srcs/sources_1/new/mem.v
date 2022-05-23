@@ -3,25 +3,22 @@
 module mem(
     input [31:0] I_addr,
     input [31:0] I_alu_result,
-    input [31:0] I_m_read_data, // data read from memory (lw)
-    input [23:0] I_switches_data, // TODO data read from switches 
-    output [31:0] O_reg_write_data,
+    input [31:0] I_m_read_data, // data read from memory 
+    input [31:0] I_io_read_data, // data read from io
+    output [31:0] O_reg_write_data, // to wb
 
     input [4:0] I_dest_reg,
     output [4:0] O_dest_reg,
-
 
     input [5:0] I_opcode,
     input [5:0] I_funct,
 
     input [31:0] I_write_data, // data to write with (sw)
-    output [31:0] O_m_write_data,
-    output O_m_write,
+    output [31:0] O_write_data, // = I_write_data
+    output O_m_write, // memory write enable
     output [31:0]  O_m_addr,
 
-    output [15:0] O_io_write_data,
-    output O_led_write,
-    output O_led_sel,
+    output O_io_write, // io write enable
 
     output O_reg_write
     
@@ -30,21 +27,15 @@ module mem(
 
     assign is_io_addr = (I_addr[31:16] == 16'hffff) ? 1 : 0;
 
-    reg [31:0] m_or_io_data;
-    always @* begin
-        if (~is_io_addr) m_or_io_data = I_m_read_data;
-        else m_or_io_data = {16'b0, I_switches_data[15:0]}; // TODO
-    end
+    wire [31:0] m_or_io_data = is_io_addr ? I_io_read_data : I_m_read_data;
+
     assign O_reg_write_data = lw ? m_or_io_data : I_alu_result;
     assign O_dest_reg = I_dest_reg;
 
-    assign O_m_write_data = I_write_data;
+    assign O_write_data = I_write_data;
     assign O_m_write = sw & ~is_io_addr;
     assign O_m_addr = I_addr;
-
-    assign O_io_write_data = I_write_data[15:0];
-    assign O_led_write = sw & is_io_addr; // TODO
-    assign O_led_sel = 0; // TODO
+    assign O_io_write = sw & is_io_addr; // TODO
 
     mem_control mem_ctrl_inst(
         .I_opcode(I_opcode),

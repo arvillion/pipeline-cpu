@@ -164,11 +164,10 @@ module cpu(
 
     wire [31:0] mem_out_reg_write_data;
     wire [4:0] mem_dest_reg;
-    wire [31:0] m_write_data;
+    wire [31:0] write_data;
     wire m_write;
     wire [31:0] m_addr;
-    wire [15:0] io_write_data;
-    wire led_write, led_sel;
+    wire io_write;
 
     wire [31:0] m_read_data;
 
@@ -176,6 +175,8 @@ module cpu(
     reg [4:0] mem_in_dest_reg;
     reg [5:0] mem_in_opcode, mem_in_funct;
     reg [31:0] mem_in_write_data;
+
+    wire [31:0] io_read_data = {8'b0, I_switches}; // TODO: switch the source of input
 
     always @(negedge W_cpu_clk) begin
         if (I_rst) begin
@@ -198,7 +199,7 @@ module cpu(
         .I_addr(mem_in_addr),
         .I_alu_result(mem_in_alu_result),
         .I_m_read_data(m_read_data),
-        .I_switches_data(I_switches), // TODO
+        .I_io_read_data(io_read_data),
         .O_reg_write_data(mem_out_reg_write_data),
 
         .I_dest_reg(mem_in_dest_reg),
@@ -208,19 +209,17 @@ module cpu(
         .I_funct(mem_in_funct),
 
         .I_write_data(mem_in_write_data),
-        .O_m_write_data(m_write_data),
+        .O_write_data(write_data),
         .O_m_write(m_write),
         .O_m_addr(m_addr),
-        .O_io_write_data(io_write_data),
-        .O_led_write(led_write),
-        .O_led_sel(led_sel),
+        .O_io_write(io_write),
         .O_reg_write(mem_reg_write)
     );
 
     dmemory dmem_inst(
         .I_clk(W_cpu_clk),
         .I_addr(m_addr),
-        .I_write_data(m_write_data),
+        .I_write_data(write_data),
         .I_m_write(m_write),
         .O_read_data(m_read_data)
     );
@@ -228,9 +227,8 @@ module cpu(
     led led_inst(
         .I_clk(W_cpu_clk),
         .I_rst(I_rst),
-        .I_write(led_write),
-        .I_sel(led_sel),
-        .I_write_data(io_write_data),
+        .I_write(io_write),
+        .I_write_data(write_data[23:0]),
         .O_led_data(O_leds)
     );
 
