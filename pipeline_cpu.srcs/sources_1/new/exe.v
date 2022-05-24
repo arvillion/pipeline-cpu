@@ -120,6 +120,6 @@ module exe(
             Shift_Result = Binput;
     end
 
-    assign O_corr_pred = (force_jump == 1'b1 || (branch == 1'b1 && Zero == 1'b0) || (nbranch == 1'b1 && Zero == 1'b1)) ? 0 : 1;
+    assign O_corr_pred = (force_jump == 1'b1 || (branch == 1'b1 && Zero == 1'b1) || (nbranch == 1'b1 && Zero == 1'b0)) ? 0 : 1;
     assign O_corr_target = (branch == 1'b1 || nbranch == 1'b1) ? O_addr_result : I_jump_target;
 endmodule
