@@ -7,9 +7,9 @@ start:
 	ori  $27,$2,0xFFFF # and this to get low 16 bits
 	ori $26,$26,1 # c==1
 begin:
-	add $3,$0,$0 # ????0-->???????
-	lw  $1,0xC70($28) # 1???????
-	srl  $2,$1,20 # ? 23~20 bits->???
+	add $3,$0,$0 # counter for tasks
+	lw  $1,0xC70($28) # ini input
+	srl  $2,$1,20 # ? 23~20 bits
 	and $4,$26,$2 # 4-->ready for next input
 	srl  $2,$2,1 # 2-->op
 	# jump to tasks
@@ -30,9 +30,9 @@ begin:
 	beq $2,$3,test7 # t7
 	j begin
 test0:
-	# ?a
+	# input a
 	and $5,$1,$27 # input a--> $5
-	addi $8,$0,0 # ??$8
+	addi $8,$0,0 # ini $8
 
 bits_count_loop:
 	srl $5,$5,1	
@@ -40,30 +40,32 @@ bits_count_loop:
 	bne $5,$0,bits_count_loop
 
 	# ???????????
-	addi $9,$0,0 # $9-->????
-	and $5,$1,$27 # ??$5
+	add $9,$0,$0 # $9-->palindrome
+	and $5,$1,$27 # data-->$5
 
 move_palindrome:
 	addi $8,$8,-1
 	and $10,$26,$5 # $10-->each bit for input
 	sllv $10,$10,$8
-	or $9,$9,$10 # ???? 
+	or $9,$9,$10 # move to ans
+	srl $5,$5,1 
 	bne $0,$8,move_palindrome
 
+	and $5,$1,$27
 	bne $9,$5,show_palindrome
 	sll $8,$26,23
-	or $5,$5,$8 # ??????+???
+	or $5,$5,$8 # move the sign to the output
 show_palindrome:
 	sw $5,0xC70($28) 
 	j begin
 test1:
-	# ?a
+	# input a
 	beq $4,$26,t1ReadB
 	and $5,$1,$27 # input a--> $5
-	sw $5,0xC70($28) # ??
+	sw $5,0xC70($28) # output
 	j begin
 t1ReadB:
-	# ?b
+	# input b
 	and $6,$1,$27 # input b--> $6
 	sw $6,0xC70($28) 
 	j begin
