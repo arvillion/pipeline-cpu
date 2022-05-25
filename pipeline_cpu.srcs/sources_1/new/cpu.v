@@ -15,14 +15,12 @@ module cpu(
     output [7:0] O_seg_en,
     output [7:0] O_num
 );  
-    wire seg_clk;// 25M
     wire W_cpu_clk; // 23M
     wire uart_clk;//10M
     cpuclk cpuclk_inst(
         .clk_in1(I_clk_100M),
         .clk_out1(W_cpu_clk),
-        .clk_out2(uart_clk),
-        .clk_out3(seg_clk)
+        .clk_out2(uart_clk)
     );
     wire spg_bufg;
     BUFG U1(.I(start_pg), .O(spg_bufg));
@@ -308,7 +306,7 @@ module cpu(
         .O_led_data(O_leds)
     );
     seven_seg seg_inst(
-        .I_clk(seg_clk),
+        .I_clk(I_clk_100M),
         .I_rst(rst),
         .I_write(io_write),
         .I_write_data(write_data[23:0]), 
