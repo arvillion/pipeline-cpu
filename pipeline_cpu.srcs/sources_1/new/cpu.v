@@ -3,17 +3,39 @@ module cpu(
     input I_clk_100M,
     input I_rst,
     input [23:0] I_switches,
-    output [23:0] O_leds
-);
-    // TODO: speed up cpu clock
+    
+    input I_start_pg,
+    input I_rx,
+    output O_tx,
+    input start_pg,
+    
+    input [3:0] I_keyboard_cols,
+    output [3:0] O_keyboard_rows,
+    
+    output [23:0] O_leds,
+    output [7:0] O_seg_en,
+    output [7:0] O_num
+);  
+    wire seg_clk;// 25M
     wire W_cpu_clk; // 23M
+    wire uart_clk;//10M
     cpuclk cpuclk_inst(
         .clk_in1(I_clk_100M),
-        .clk_out1(W_cpu_clk)
+        .clk_out1(W_cpu_clk),
+        .clk_out2(uart_clk),
+        .clk_out3(seg_clk)
     );
-
-    reg [31:0] pc; // 当前pc,输入ifetch
-    wire [31:0] next_pc; // ifetch输出的next pc, =pc+4
+    wire spg_bufg;
+    BUFG U1(.I(start_pg), .O(spg_bufg));
+    reg upg_rst;
+    always @ (posedge I_clk_100M) begin
+       if (spg_bufg) upg_rst = 0;
+       if (I_rst) upg_rst = 1;
+    end
+    wire rst;
+    assign rst = I_rst | ~upg_rst;
+    reg [31:0] pc;
+    wire [31:0] next_pc;
 
     wire stall, corr_pred;
     wire [31:0] corr_target;
@@ -24,47 +46,67 @@ module cpu(
     );
 
     always @(negedge W_cpu_clk) begin
-        if (I_rst) pc <= 0;
+        if (rst) pc <= 0;
         else if (stall)      pc <= pc;
         else if (~corr_pred) pc <= corr_target;
         else                 pc <= next_pc;
     end
 
     wire [31:0] instruction;
-    instructions_ram instr_ram_inst(
-        .clka(W_cpu_clk),
-        .addra(pc[15:2]),
-        .douta(instruction),
-        
-        // unused now
-        .dina(31'b0),
-        .wea(1'b0)
+
+    wire O_upg_clk;
+    wire O_upg_wen;
+    wire O_upg_done;
+    wire [14:0] O_upg_adr;
+    wire [31:0] O_upg_dat;
+    uart_bmpg_0 uart_inst(
+        .upg_clk_i(uart_clk),
+        .upg_rst_i(upg_rst),
+        .upg_rx_i(I_rx),
+        .upg_clk_o(O_upg_clk),
+        .upg_wen_o(O_upg_wen),
+        .upg_adr_o(O_upg_adr),
+        .upg_dat_o(O_upg_dat),
+        .upg_done_o(O_upg_done),
+        .upg_tx_o(O_tx)
+    );
+    wire ditermine_program = O_upg_wen&(~O_upg_adr[14]);
+    programrom programrom_inst(
+        .I_rom_clk(W_cpu_clk),
+        .I_rom_adr(pc[15:2]),
+        .O_Instruction(instruction),
+        .I_upg_rst(upg_rst),
+        .I_upg_clk(uart_clk),
+        .I_upg_wen(ditermine_program),
+        .I_upg_adr(O_upg_adr),
+        .I_upg_dat(O_upg_dat),
+        .I_upg_done(O_upg_done)
     );
 
     reg [31:0] id_in_instruction; // instruction to decoder
 
     always @(negedge W_cpu_clk) begin
-        if (I_rst)           id_in_instruction <= 0;
+        if (rst)           id_in_instruction <= 0;
         else if (stall)      id_in_instruction <= id_in_instruction;
-        else if (~corr_pred) id_in_instruction <= 0; // 消除if对id的影响
+        else if (~corr_pred) id_in_instruction <= 0; // 消除if对id的影�?
         else                 id_in_instruction <= instruction;
     end
 
     reg [31:0] id_in_pc_plus_4;
     wire [31:0] id_out_pc_plus_4;
     always @(negedge W_cpu_clk) begin
-        if (I_rst)      id_in_pc_plus_4 <= 0;
+        if (rst)      id_in_pc_plus_4 <= 0;
         else if (stall) id_in_pc_plus_4 <= id_in_pc_plus_4;
         else            id_in_pc_plus_4 <= pc + 4;
     end
 
     wire rs_can_forward, rt_can_forward;
-    wire rs_should_stall, rt_should_stall; 
+    wire rs_should_stall, rt_should_stall;
     wire [31:0] rs_forward_data, rt_forward_data;
     wire [31:0] rs_curr_data, rt_curr_data;
 
     wire [31:0] id_out_imm_extended;
-    wire [31:0] id_out_rs_data, id_out_rt_data; //需要的寄存器值，可能是forward来的
+    wire [31:0] id_out_rs_data, id_out_rt_data; 
     wire [4:0] id_out_rs, id_out_rt, id_out_rd;
     wire [4:0] id_out_shamt;
     wire [31:0] id_out_jump_target;
@@ -105,8 +147,7 @@ module cpu(
     reg [4:0] exe_in_rt, exe_in_rd;
 
     always @(negedge W_cpu_clk) begin
-        if (I_rst) begin
-            // sll 防止后续写寄存器 内存
+        if (rst) begin
             exe_in_opcode <= 0;
             exe_in_funct <= 0;
             exe_in_shamt <= 0;
@@ -118,7 +159,7 @@ module cpu(
             exe_in_funct <= 0;
             exe_in_shamt <= 0;
             exe_in_rt <= 0;
-            exe_in_rd <= 0; 
+            exe_in_rd <= 0;
         end
         else begin
             exe_in_rs_data <= id_out_rs_data;
@@ -139,9 +180,7 @@ module cpu(
     wire [4:0] exe_dest_reg;
     wire exe_reg_write, exe_is_lw;
 
-    wire hi_write, lo_write;
-    wire [31:0] hi_write_data, lo_write_data;
-    wire [31:0] hi_read_data, lo_read_data;
+
 
     exe exe_inst(
         .I_rs_data(exe_in_rs_data),
@@ -161,27 +200,7 @@ module cpu(
         .O_dest_reg(exe_dest_reg),
         .O_reg_write(exe_reg_write),
         .O_is_lw(exe_is_lw),
-        .O_mem_write_data(exe_out_mem_write_data),
-
-        .O_hi_write(hi_write),
-        .O_lo_write(lo_write),
-        .O_hi_write_data(hi_write_data),
-        .O_lo_write_data(lo_write_data),
-
-        .I_hi_read_data(hi_read_data),
-        .I_lo_read_data(lo_read_data)
-    );
-
-    hilo hilo_inst(
-        .I_clk(W_cpu_clk),
-        .I_rst(I_rst),
-        .I_hi_write(hi_write),
-        .I_lo_write(lo_write),
-        .I_hi_write_data(hi_write_data),
-        .I_lo_write_data(lo_write_data),
-
-        .O_hi_read_data(hi_read_data),
-        .O_lo_read_data(lo_read_data)
+        .O_mem_write_data(exe_out_mem_write_data)
     );
 
     wire [31:0] mem_out_reg_write_data;
@@ -197,11 +216,19 @@ module cpu(
     reg [4:0] mem_in_dest_reg;
     reg [5:0] mem_in_opcode, mem_in_funct;
     reg [31:0] mem_in_write_data;
+//    keyboard keyboard_inst(
+//        .I_clk(W_cpu_clk),
+//        .I_rst(rst),
+//        .O_read_data(),
+//        .I_cols(I_keyboard_cols),
+//        .O_rows(O_keyboard_rows)
+//     );
 
     wire [31:0] io_read_data = {8'b0, I_switches}; // TODO: switch the source of input
-
+    reg [31:0] io_read_data_keyboard;
+    
     always @(negedge W_cpu_clk) begin
-        if (I_rst) begin
+        if (rst) begin
             mem_in_opcode <= 0;
             mem_in_funct <= 0;
             mem_in_dest_reg <= 0;
@@ -237,22 +264,38 @@ module cpu(
         .O_io_write(io_write),
         .O_reg_write(mem_reg_write)
     );
-
+    wire ditermine_dmem = O_upg_wen&O_upg_adr[14];
     dmemory dmem_inst(
         .I_clk(W_cpu_clk),
         .I_addr(m_addr),
         .I_write_data(write_data),
         .I_m_write(m_write),
-        .O_read_data(m_read_data)
+        .O_read_data(m_read_data),
+        .I_upg_rst(upg_rst), // UPG reset (Active High)
+        .I_upg_clk(uart_clk), // UPG ram_clk_i (10MHz)
+        .I_upg_wen(ditermine_dmem), // UPG write enable
+        .I_upg_adr(O_upg_adr), // UPG write address
+        .I_upg_dat(O_upg_dat), // UPG write data
+        .I_upg_done(O_upg_done) // 1 if programming is finished
     );
 
     led led_inst(
-        .I_clk(W_cpu_clk),
-        .I_rst(I_rst),
+        .I_clk(I_clk_100M),
+        .I_rst(rst),
         .I_write(io_write),
         .I_write_data(write_data[23:0]),
         .O_led_data(O_leds)
     );
+    seven_seg seg_inst(
+        .I_clk(seg_clk),
+        .I_rst(rst),
+        .I_write(io_write),
+        .I_write_data(write_data[23:0]), 
+        .O_num(O_num),
+        .O_seg_en(O_seg_en)
+    );
+
+
 
 
     wire wb_reg_write;
@@ -264,7 +307,7 @@ module cpu(
     reg [4:0] wb_in_dest_reg;
 
     always @(negedge W_cpu_clk) begin
-        if (I_rst) begin
+        if (rst) begin
             wb_in_opcode <= 0;
             wb_in_funct <= 0;
             wb_in_dest_reg <= 0;
@@ -276,7 +319,7 @@ module cpu(
             wb_in_dest_reg <= mem_dest_reg;
             wb_in_write_data <= mem_out_reg_write_data;
         end
-    end    
+    end
 
     wb wb_inst(
         .I_opcode(wb_in_opcode),
@@ -291,7 +334,6 @@ module cpu(
 
 
 
-    // forward寄存器、内存内容
     forward forward_inst1(
         .I_ex_reg_write(exe_reg_write),
         .I_ex_is_lw(exe_is_lw),
@@ -334,7 +376,7 @@ module cpu(
 
     regfile rf_inst(
         .I_clk(W_cpu_clk),
-        .I_rst(I_rst),
+        .I_rst(rst),
         .I_read_src1(id_out_rs),
         .I_read_src2(id_out_rt),
         .I_write_dest(wb_dest_reg),
@@ -343,4 +385,5 @@ module cpu(
         .O_read_data2(rt_curr_data),
         .I_reg_write(wb_reg_write)
     );
+
 endmodule
