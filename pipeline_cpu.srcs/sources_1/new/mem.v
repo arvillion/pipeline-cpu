@@ -17,7 +17,7 @@ module mem(
     output [31:0] O_write_data, // = I_write_data
     output O_m_write, // memory write enable
     output [31:0]  O_m_addr,
-
+    
     output O_io_write, // io write enable
 
     output O_reg_write
@@ -35,7 +35,7 @@ module mem(
     assign O_write_data = I_write_data;
     assign O_m_write = sw & ~is_io_addr;
     assign O_m_addr = I_addr;
-    assign O_io_write = sw & is_io_addr; // TODO
+    assign O_io_write = sw & is_io_addr;
 
     mem_control mem_ctrl_inst(
         .I_opcode(I_opcode),
@@ -51,13 +51,23 @@ module dmemory (
     input [31:0] I_addr,
     input [31:0] I_write_data,
     input I_m_write,
-    output [31:0] O_read_data
+    output [31:0] O_read_data,
+  
+    input I_upg_rst,
+    input I_upg_clk, 
+    input I_upg_wen, 
+    input [13:0] I_upg_adr, 
+    input [31:0] I_upg_dat, 
+    input I_upg_done 
 );
+    wire clk = !I_clk;
+    wire kickOff = I_upg_rst | (~I_upg_rst & I_upg_done);
+    
     data_ram dram_inst(
-        .addra(I_addr[15:2]),
-        .clka(I_clk),
-        .dina(I_write_data),
+        .addra(kickOff ? I_addr[15:2]:I_upg_adr),
+        .clka(kickOff ? I_clk:clk),
+        .dina(kickOff ? I_write_data:I_upg_dat),
         .douta(O_read_data),
-        .wea(I_m_write)
+        .wea(kickOff ? I_m_write:I_upg_clk)
     );
 endmodule
