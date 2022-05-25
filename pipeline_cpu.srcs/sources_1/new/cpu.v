@@ -4,7 +4,6 @@ module cpu(
     input I_rst,
     input [23:0] I_switches,
     
-    input I_start_pg,
     input I_rx,
     output O_tx,
     input start_pg,
@@ -88,7 +87,7 @@ module cpu(
     always @(negedge W_cpu_clk) begin
         if (rst)           id_in_instruction <= 0;
         else if (stall)      id_in_instruction <= id_in_instruction;
-        else if (~corr_pred) id_in_instruction <= 0; // 消除if对id的影�?
+        else if (~corr_pred) id_in_instruction <= 0; 
         else                 id_in_instruction <= instruction;
     end
 
@@ -180,7 +179,9 @@ module cpu(
     wire [4:0] exe_dest_reg;
     wire exe_reg_write, exe_is_lw;
 
-
+    wire hi_write, lo_write;
+    wire [31:0] hi_write_data, lo_write_data;
+    wire [31:0] hi_read_data, lo_read_data;
 
     exe exe_inst(
         .I_rs_data(exe_in_rs_data),
@@ -200,7 +201,27 @@ module cpu(
         .O_dest_reg(exe_dest_reg),
         .O_reg_write(exe_reg_write),
         .O_is_lw(exe_is_lw),
-        .O_mem_write_data(exe_out_mem_write_data)
+        .O_mem_write_data(exe_out_mem_write_data),
+        
+        .O_hi_write(hi_write),
+        .O_lo_write(lo_write),
+        .O_hi_write_data(hi_write_data),
+        .O_lo_write_data(lo_write_data),
+
+        .I_hi_read_data(hi_read_data),
+        .I_lo_read_data(lo_read_data)
+    );
+    
+    hilo hilo_inst(
+        .I_clk(W_cpu_clk),
+        .I_rst(I_rst),
+        .I_hi_write(hi_write),
+        .I_lo_write(lo_write),
+        .I_hi_write_data(hi_write_data),
+        .I_lo_write_data(lo_write_data),
+
+        .O_hi_read_data(hi_read_data),
+        .O_lo_read_data(lo_read_data)
     );
 
     wire [31:0] mem_out_reg_write_data;
@@ -280,7 +301,7 @@ module cpu(
     );
 
     led led_inst(
-        .I_clk(I_clk_100M),
+        .I_clk(W_cpu_clk),
         .I_rst(rst),
         .I_write(io_write),
         .I_write_data(write_data[23:0]),
