@@ -24,19 +24,30 @@ module exe(
 
     output O_reg_write,
     output O_is_lw,
-    output [31:0] O_mem_write_data // 写入data memory的数�? for sw
+    output [31:0] O_mem_write_data, // 写入data memory的数据 for sw
+
+    output O_hi_write,
+    output O_lo_write,
+    output reg [31:0] O_hi_write_data,
+    output reg [31:0] O_lo_write_data,
+
+    input [31:0] I_hi_read_data,
+    input [31:0] I_lo_read_data
 
 );
     wire [1:0] aluop;
     wire alusrc, sftmd, i_minus_format, force_jump, regdst, jal;
     wire branch, nbranch;
 
+    wire mfhi, mthi, mflo, mtlo, mult, multu;
+    wire [63:0] signed_mul_output, unsigned_mul_output;
+
     exe_control exe_ctrl_inst(
         .I_opcode(I_opcode),
         .I_funct(I_funct),
         .O_aluop(aluop),
-        .O_regdst(regdst), // �?1表明目的寄存器是rd, 否则目的寄存器是rt
-        .O_alusrc(alusrc), // 表明第二个操作数是立即数（beq，bne除外�?
+        .O_regdst(regdst), // 为1表明目的寄存器是rd, 否则目的寄存器是rt
+        .O_alusrc(alusrc), // 表明第二个操作数是立即数（beq，bne除外）
         .O_sftmd(sftmd),
         .O_force_jump(force_jump), // jr jmp jal
         .O_branch(branch),
@@ -44,7 +55,14 @@ module exe(
         .O_jal(jal),
         .O_lw(O_is_lw),
         .O_i_minus_format(i_minus_format),
-        .O_reg_write(O_reg_write)
+        .O_reg_write(O_reg_write),
+
+        .O_mfhi(mfhi),
+        .O_mthi(mthi),
+        .O_mflo(mflo),
+        .O_mtlo(mtlo),
+        .O_mult(mult),
+        .O_multu(multu)
     );
 
     assign O_dest_reg = regdst == 1'b1 ? I_rd : I_rt;
@@ -77,6 +95,9 @@ module exe(
      always @* begin
         // jal
         if (jal) O_alu_result = I_pc_plus_4;
+        // mfhi mflo
+        else if (mfhi) O_alu_result = I_hi_read_data;
+        else if (mflo) O_alu_result = I_lo_read_data;
         // slt, slti
         else if (Exe_code[3:0] == 4'b1010 || (Exe_code[3:0] == 4'b0010 && i_minus_format)) 
             O_alu_result = ($signed(Ainput) < $signed(Binput)) ? 1 : 0;
@@ -122,4 +143,31 @@ module exe(
 
     assign O_corr_pred = (force_jump == 1'b1 || (branch == 1'b1 && Zero == 1'b1) || (nbranch == 1'b1 && Zero == 1'b0)) ? 0 : 1;
     assign O_corr_target = (branch == 1'b1 || nbranch == 1'b1) ? O_addr_result : I_jump_target;
+
+    assign O_hi_write = mthi || mult || multu;
+    assign O_lo_write = mtlo || mult || multu;
+
+    signed_multiplier s_mul_inst(
+        .A(I_rs_data),
+        .B(I_rt_data),
+        .P(signed_mul_output)
+    );
+    unsigned_multiplier u_mul_inst(
+        .A(I_rs_data),
+        .B(I_rt_data),
+        .P(unsigned_mul_output)
+    );
+    
+    always @(*) begin
+        if (mthi)       O_hi_write_data = I_rs_data;
+        else if (mult)  O_hi_write_data = signed_mul_output[63:32];
+        else if (multu) O_hi_write_data = unsigned_mul_output[63:32];
+    end
+
+    always @(*) begin
+        if (mtlo)       O_lo_write_data = I_rs_data;
+        else if (mult)  O_lo_write_data = signed_mul_output[31:0];
+        else if (multu) O_lo_write_data = unsigned_mul_output[31:0];
+    end
+
 endmodule
