@@ -1,24 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date: 2022/05/23 22:48:28
-// Design Name: 
-// Module Name: seven_seg
-// Project Name: 
-// Target Devices: 
-// Tool Versions: 
-// Description: 
-// 
-// Dependencies: 
-// 
-// Revision:
-// Revision 0.01 - File Created
-// Additional Comments:
-// 
-//////////////////////////////////////////////////////////////////////////////////
-
 
 module seven_seg(
     input I_clk,
@@ -74,22 +54,15 @@ module seven_seg(
     integer three;
     integer two;
     integer one;
-    always @(I_write_data) begin
-        eight = result / (65536*16*16*16);
-        origin = result - eight* (65536*16*16*16);
-        seven = origin / (65536*16*16);
-        origin = origin - seven* (65536*16*16);
-        six = origin / (65536*16) ;
-        origin = origin - six*(65536*16) ;
-        five = origin / 65536;
-        origin = origin - five*65536;
-        four = origin / 4096;
-        origin = origin - four*4096;
-        three = origin / 256;
-        origin = origin - three*256;
-        two = origin / 16;
-        origin = origin - two*16;
-        one = origin;
+    always @(result) begin
+        eight = (result & 32'hf0000000) >> 28;
+        seven = (result & 32'h0f000000) >> 24;
+        six   = (result & 32'h00f00000) >> 20;
+        five  = (result & 32'h000f0000) >> 16;
+        four  = (result & 32'h0000f000) >> 12;
+        three = (result & 32'h00000f00) >> 8;
+        two   = (result & 32'h000000f0) >> 4;
+        one   = (result & 32'h0000000f);
     end
     
     

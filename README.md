@@ -58,6 +58,25 @@ TODO: 外设io的寻址范围，寻址单位
 
 TODO: CPU接口：时钟、复位、uart接口（可选）、其他常用IO接口使用说明。
 
+```verilog
+module cpu(
+    input I_clk_100M, // clock
+    input I_rst, // reset
+    input [23:0] I_switches, // switches
+    
+    input I_rx, //
+    output O_tx, //
+    input start_pg, //
+    
+    input [3:0] I_keyboard_cols, //
+    output [3:0] O_keyboard_rows, //
+    
+    output [23:0] O_leds, // leds
+    output [7:0] O_seg_en, // 
+    output [7:0] O_num //
+);  
+```
+
 ## Structure
 
 TODO:
@@ -69,6 +88,8 @@ CPU内部结构
 
 #### ifetch
 
+This module makes a prediction for the coming pc value.
+
 ```verilog
 module ifetch(
     input [31:0] I_pc, // current value in pc register
@@ -77,6 +98,8 @@ module ifetch(
 ```
 
 #### decoder
+
+This module extract fields from the instruction, and get necessary register values to get prepared for the next few stages.
 
 ```verilog
 module decoder(
@@ -118,6 +141,8 @@ module decoder(
 
 #### exe
 
+This module will do some arithmetic and logical operations, and check whether the branch prediction is correct or not.
+
 ```verilog
 module exe(
     input [31:0] I_rs_data, // data in rs
@@ -158,6 +183,8 @@ module exe(
 
 #### mem
 
+This module is actually what we call `memorio`. It will direct the output in the last stage(exe) to either io or data memory modules.
+
 ```verilog
 module mem(
     input [31:0] I_addr, // address
@@ -186,6 +213,8 @@ module mem(
 
 #### wb
 
+The registers will be written in this stage, if necessary.
+
 ```verilog
 module wb(
     input [5:0] I_opcode, // opcode
@@ -200,6 +229,8 @@ module wb(
 ```
 
 #### forward
+
+The decoder needs to obtain values from registers according to the instruction. And this module can forward data to the need stages.
 
 ```verilog
 module forward(
@@ -228,6 +259,8 @@ module forward(
 
 #### regfile
 
+0-31 registers 
+
 ```verilog
 module regfile(
     input I_clk, // cpu clock
@@ -243,6 +276,8 @@ module regfile(
 ```
 
 #### hilo
+
+hi and lo registers
 
 ```verilog
 module hilo(
