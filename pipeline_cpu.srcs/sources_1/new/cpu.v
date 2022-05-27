@@ -13,7 +13,9 @@ module cpu(
     
     output [23:0] O_leds,
     output [7:0] O_seg_en,
-    output [7:0] O_num
+    output [7:0] O_num,
+
+    input I_commit
 );  
 
     wire W_cpu_clk; // 25M
@@ -246,7 +248,8 @@ module cpu(
 //        .O_rows(O_keyboard_rows)
 //     );
 
-    wire [31:0] io_read_data = {8'b0, I_switches}; // TODO: switch the source of input
+    wire [23:0] switches;
+    wire [31:0] io_read_data = {8'b0, switches}; // TODO: switch the source of input
     reg [31:0] io_read_data_keyboard;
     
     always @(negedge W_cpu_clk) begin
@@ -286,7 +289,9 @@ module cpu(
         .O_io_write(io_write),
         .O_reg_write(mem_reg_write)
     );
+
     wire ditermine_dmem = O_upg_wen&O_upg_adr[14];
+
     dmemory dmem_inst(
         .I_clk(W_cpu_clk),
         .I_addr(m_addr),
@@ -307,6 +312,14 @@ module cpu(
         .I_write(io_write),
         .I_write_data(write_data[23:0]),
         .O_led_data(O_leds)
+    );
+
+    buffer bf_inst(
+        .I_clk(I_clk_100M),
+        .I_rst(rst),
+        .I_switches(I_switches),
+        .I_commit(I_commit),
+        .O_switches_value(switches)
     );
 
     seven_seg seg_inst(

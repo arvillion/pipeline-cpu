@@ -146,7 +146,7 @@ set_property PACKAGE_PIN M13 [get_ports {O_leds[21]}]
 set_property PACKAGE_PIN L13 [get_ports {O_leds[22]}]
 set_property PACKAGE_PIN K17 [get_ports {O_leds[23]}]
 
-#keyboard
+# keyboard
 set_property IOSTANDARD LVCMOS33 [get_ports {I_keyboard_cols[3]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {I_keyboard_cols[2]}]
 set_property IOSTANDARD LVCMOS33 [get_ports {I_keyboard_cols[1]}]
@@ -163,3 +163,7 @@ set_property PACKAGE_PIN L5 [get_ports {O_keyboard_rows[3]}]
 set_property PACKAGE_PIN J6 [get_ports {O_keyboard_rows[2]}]
 set_property PACKAGE_PIN K6 [get_ports {O_keyboard_rows[1]}]
 set_property PACKAGE_PIN M2 [get_ports {O_keyboard_rows[0]}]
+
+# commit
+set_property IOSTANDARD LVCMOS33 [get_ports I_commit]
+set_property PACKAGE_PIN P5 [get_ports I_commit]
