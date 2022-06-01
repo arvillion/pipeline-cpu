@@ -264,34 +264,7 @@ module cpu(
         end
 
     end
-    wire O_display;
-    wire O_signal;
-    keyboard keyboard_inst(
-       .I_clk(W_cpu_clk),
-       .I_rst(rst),
-       .display(O_display),
-       .I_cols(I_keyboard_cols),
-       .O_signal(O_signal),
-       .O_rows(O_keyboard_rows)
-    );
-    wire signal_anti_shake;
-    anti_shake_single anti_inst2(
-        .I_key(O_signal),
-        .I_clk(W_cpu_clk),
-        .I_rst(rst),
-        .O_key(signal_anti_shake)
-    );
-    wire [31:0] io_display_keyboard;
-    wire [31:0] io_read_data_keyboard;
-    queue q_inst(
-            .I_clk(W_cpu_clk),
-            .I_rst(rst),
-            .I_commit(I_commit),
-            .next(signal_anti_shake),
-            .value(O_display),
-            .O_keyboard_value(io_display_keyboard),
-            .O_read_data_value(io_read_data_keyboard)
-    );
+ 
 
     wire [23:0] switches;
     buffer bf_inst(
@@ -302,8 +275,8 @@ module cpu(
         .O_switches_value(switches)
     );
 
-    wire [31:0] io_read_data = m_addr[15:12]==4'hf ? io_read_data_keyboard : {8'b0, switches};
-    wire [31:0] io_display = m_addr[15:12]==4'hf ? io_display_keyboard:{8'b0, switches};
+    wire [31:0] display, kb_read_data;
+    wire [31:0] io_read_data = m_addr[15:12]==4'he ? kb_read_data : {8'b0, switches};
 
     mem mem_inst(
         .I_addr(mem_in_addr),
@@ -343,12 +316,23 @@ module cpu(
         .I_upg_dat(O_upg_dat), // UPG write data
         .I_upg_done(O_upg_done) // 1 if programming is finished
     );
+
+
+    keyboard_top kt_inst(
+        .I_clk_25M(W_cpu_clk),
+        .I_rst(rst),
+        .I_commit(I_commit),
+        .I_keyboard_cols(I_keyboard_cols),
+        .O_keyboard_rows(O_keyboard_rows),
+        .O_display(display),
+        .O_read_data(kb_read_data)
+    );
   
     seven_seg seg_inst(
         .I_clk(clk_100M),
         .I_rst(rst),
         .I_write(io_write),
-        .I_write_data(io_display[31:0]), 
+        .I_write_data(display[31:0]), 
         .O_num(O_num),
         .O_seg_en(O_seg_en)
     );
