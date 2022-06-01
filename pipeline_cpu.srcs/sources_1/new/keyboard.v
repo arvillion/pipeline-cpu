@@ -3,10 +3,10 @@
 module keyboard (
   input I_clk,
   input I_rst,
-  output reg[3:0] display,
-  input[3:0] I_cols,
-  output reg O_led,
-  output reg[3:0] O_rows
+  output reg [3:0] display,
+  input [3:0] I_cols,
+  output reg O_signal,
+  output reg [3:0] O_rows
 );
  
 
@@ -133,16 +133,16 @@ module keyboard (
   reg [31:0] cnt;
   always @(posedge I_clk)begin
     if(I_rst) begin
-      O_led <= 4'b0;
+      O_signal <= 4'b0;
     end 
-    else if (led & O_led != 1'b1)begin
-      O_led <= 1'b1;
+    else if (led & O_signal != 1'b1)begin
+      O_signal <= 1'b1;
     end
     else begin
       if (cnt < 1000000) cnt <= cnt + 1'b1;//10000000
       else begin
             cnt <= 1'b0;
-            O_led <= 1'b0;
+            O_signal <= 1'b0;
         end
     end
   end
