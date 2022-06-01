@@ -224,7 +224,7 @@ module cpu(
     
     hilo hilo_inst(
         .I_clk(W_cpu_clk),
-        .I_rst(I_rst),
+        .I_rst(rst),
         .I_hi_write(hi_write),
         .I_lo_write(lo_write),
         .I_hi_write_data(hi_write_data),
@@ -347,7 +347,7 @@ module cpu(
     seven_seg seg_inst(
         .I_clk(clk_100M),
         .I_rst(rst),
-        .I_write(io_write),
+        .I_write(io_except_vga_write),
         .I_write_data(write_data[31:0]), 
         .O_num(O_num),
         .O_seg_en(O_seg_en)
@@ -356,7 +356,7 @@ module cpu(
     led led_inst(
         .I_clk(W_cpu_clk),
         .I_rst(rst),
-        .I_write(io_write),
+        .I_write(io_except_vga_write),
         .I_write_data(write_data[23:0]),
         .O_led_data(O_leds)
     );
