@@ -25,17 +25,19 @@ module cpu(
     wire W_cpu_clk; // 25M
     wire uart_clk; //10M
     wire vga_clk = W_cpu_clk;
+    wire clk_100M; // 100M
     
     cpuclk cpuclk_inst(
         .clk_in1(I_clk_100M),
         .clk_out1(W_cpu_clk),
-        .clk_out2(uart_clk)
+        .clk_out2(uart_clk),
+        .clk_out3(clk_100M)
     );
 
     wire spg_bufg;
     BUFG U1(.I(start_pg), .O(spg_bufg));
     reg upg_rst;
-    always @ (posedge I_clk_100M) begin
+    always @ (posedge clk_100M) begin
        if (spg_bufg) upg_rst = 0;
        if (I_rst) upg_rst = 1;
     end
@@ -245,19 +247,6 @@ module cpu(
     reg [4:0] mem_in_dest_reg;
     reg [5:0] mem_in_opcode, mem_in_funct;
     reg [31:0] mem_in_write_data;
-//    keyboard keyboard_inst(
-//        .I_clk(W_cpu_clk),
-//        .I_rst(rst),
-//        .O_read_data(),
-//        .I_cols(I_keyboard_cols),
-//        .O_rows(O_keyboard_rows)
-//     );
-
-    wire [23:0] switches;
-    //wire [31:0] io_read_data = {8'b0, switches}; // TODO: switch the source of input
-    wire [31:0] io_display_keyboard; // TODO
-    wire [31:0] io_read_data = m_addr[15:12] == 4'he ? io_display_keyboard : {8'b0, switches};
-    reg [31:0] io_read_data_keyboard;
     
     always @(negedge W_cpu_clk) begin
         if (rst) begin
@@ -275,6 +264,10 @@ module cpu(
         end
 
     end
+
+    wire [23:0] switches;
+    wire [31:0] io_read_data = m_addr[15:12]==4'he ? io_read_data_keyboard : {8'b0, switches};
+    wire [31:0] io_display = m_addr[15:12]==4'he ? io_display_keyboard:{8'b0, switches};
 
     mem mem_inst(
         .I_addr(mem_in_addr),
@@ -315,16 +308,36 @@ module cpu(
         .I_upg_done(O_upg_done) // 1 if programming is finished
     );
 
-    led led_inst(
+    wire O_display;
+    wire signal;
+    keyboard keyboard_inst(
+       .I_clk(W_cpu_clk),
+       .I_rst(rst),
+       .display(O_display),
+       .I_cols(I_keyboard_cols),
+       .O_signal(signal),
+       .O_rows(O_keyboard_rows)
+    );
+    wire signal_anti_shake;
+    anti_shake_single anti_inst(
+        .I_key(signal),
         .I_clk(W_cpu_clk),
         .I_rst(rst),
-        .I_write(io_except_vga_write),
-        .I_write_data(write_data[23:0]),
-        .O_led_data(O_leds)
+        .O_key(signal_anti_shake)
+    );
+    queue q_inst(
+        .I_clk(W_cpu_clk),
+        .I_rst(rst),
+        .I_commit(I_commit),
+        .next(signal_anti_shake),
+        .value(O_display),
+        .O_keyboard_value(io_display_keyboard),
+        .O_read_data_value(io_read_data_keyboard)
     );
 
+
     buffer bf_inst(
-        .I_clk(I_clk_100M),
+        .I_clk(clk_100M),
         .I_rst(rst),
         .I_switches(I_switches),
         .I_commit(I_commit),
@@ -332,12 +345,20 @@ module cpu(
     );
 
     seven_seg seg_inst(
-        .I_clk(I_clk_100M),
+        .I_clk(clk_100M),
         .I_rst(rst),
-        .I_write(io_except_vga_write),
-        .I_write_data(write_data[23:0]), 
+        .I_write(io_write),
+        .I_write_data(write_data[31:0]), 
         .O_num(O_num),
         .O_seg_en(O_seg_en)
+    );
+
+    led led_inst(
+        .I_clk(W_cpu_clk),
+        .I_rst(rst),
+        .I_write(io_write),
+        .I_write_data(write_data[23:0]),
+        .O_led_data(O_leds)
     );
 
     wire [9:0] px, py;

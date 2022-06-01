@@ -3,13 +3,21 @@
 module buffer(
     input I_clk,
     input I_rst,
-    input [23:0] I_switches,
+    input [31:0] I_switches,
     input I_commit,
-    output reg [23:0] O_switches_value
-);
-    always @(posedge I_clk) begin
-        if (I_rst)         O_switches_value <= 0;
-        else if (I_commit) O_switches_value <= I_switches;
-        else               O_switches_value <= O_switches_value;
+    output reg [31:0] O_switches_value
+    );
+    always @(posedge I_clk)begin
+      if(I_rst)begin
+          O_switches_value<=32'b0;
+      end
+      else if(I_commit)begin
+          O_switches_value<=I_switches;
+      end
+      else begin
+          O_switches_value<=O_switches_value;
+      end
     end
+
+    
 endmodule
