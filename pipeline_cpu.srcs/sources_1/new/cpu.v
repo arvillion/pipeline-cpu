@@ -15,11 +15,16 @@ module cpu(
     output [7:0] O_seg_en,
     output [7:0] O_num,
 
-    input I_commit
+    input I_commit,
+
+    output O_hs,
+    output O_vs,
+    output [11:0] O_rgb444
 );  
 
     wire W_cpu_clk; // 25M
     wire uart_clk; //10M
+    wire vga_clk = W_cpu_clk;
     
     cpuclk cpuclk_inst(
         .clk_in1(I_clk_100M),
@@ -249,7 +254,9 @@ module cpu(
 //     );
 
     wire [23:0] switches;
-    wire [31:0] io_read_data = {8'b0, switches}; // TODO: switch the source of input
+    //wire [31:0] io_read_data = {8'b0, switches}; // TODO: switch the source of input
+    wire [31:0] io_display_keyboard; // TODO
+    wire [31:0] io_read_data = m_addr[15:12] == 4'he ? io_display_keyboard : {8'b0, switches};
     reg [31:0] io_read_data_keyboard;
     
     always @(negedge W_cpu_clk) begin
@@ -291,6 +298,8 @@ module cpu(
     );
 
     wire ditermine_dmem = O_upg_wen&O_upg_adr[14];
+    wire vga_write = io_write && (mem_in_addr >= 32'hfffff000 && mem_in_addr < 32'hfffff960);
+    wire io_except_vga_write = io_write & ~vga_write;
 
     dmemory dmem_inst(
         .I_clk(W_cpu_clk),
@@ -309,7 +318,7 @@ module cpu(
     led led_inst(
         .I_clk(W_cpu_clk),
         .I_rst(rst),
-        .I_write(io_write),
+        .I_write(io_except_vga_write),
         .I_write_data(write_data[23:0]),
         .O_led_data(O_leds)
     );
@@ -325,10 +334,50 @@ module cpu(
     seven_seg seg_inst(
         .I_clk(I_clk_100M),
         .I_rst(rst),
-        .I_write(io_write),
+        .I_write(io_except_vga_write),
         .I_write_data(write_data[23:0]), 
         .O_num(O_num),
         .O_seg_en(O_seg_en)
+    );
+
+    wire [9:0] px, py;
+    wire [11:0] pixel_data;
+
+    vga vga_inst(
+        .I_clk_25M(vga_clk),
+        .I_rst_n(~rst),
+        .O_rgb444(O_rgb444),
+        .O_hs(O_hs),
+        .O_vs(O_vs),
+        .I_pixel_data(pixel_data),
+        .O_pixel_x(px),
+        .O_pixel_y(py)
+    );
+
+    wire [11:0] vga_ram_read_addr;
+    wire [11:0] vga_ram_write_addr = mem_in_addr[11:0] & 12'hfff;
+    wire [15:0] vga_ram_read_data;
+
+    text_gen text_gen_inst(
+        .I_clk(vga_clk),
+        .I_pixel_x(px),
+        .I_pixel_y(py),
+        .O_pixel_data(pixel_data),
+
+        .O_vga_ram_addr(vga_ram_read_addr),
+        .I_vga_ram_data(vga_ram_read_data)
+    );
+
+    vga_ram vga_ram_inst(
+        .addra(vga_ram_write_addr),
+        .clka(vga_clk),
+        .dina(write_data[15:0]),
+        //.dina(16'h0F45),
+        .wea(vga_write),
+
+        .addrb(vga_ram_read_addr),
+        .clkb(vga_clk),
+        .doutb(vga_ram_read_data)
     );
 
 
