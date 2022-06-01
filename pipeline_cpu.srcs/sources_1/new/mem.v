@@ -60,12 +60,11 @@ module dmemory (
     input [31:0] I_upg_dat, 
     input I_upg_done 
 );
-    wire clk = !I_clk;
     wire kickOff = I_upg_rst | (~I_upg_rst & I_upg_done);
     
     data_ram dram_inst(
         .addra(kickOff ? I_addr[15:2]:I_upg_adr),
-        .clka(kickOff ? clk:I_upg_clk),
+        .clka(kickOff ? I_clk :I_upg_clk),
         .dina(kickOff ? I_write_data:I_upg_dat),
         .douta(O_read_data),
         .wea(kickOff ? I_m_write:I_upg_wen)
