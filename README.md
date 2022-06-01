@@ -64,16 +64,16 @@ module cpu(
     input I_rst, // reset
     input [23:0] I_switches, // switches
     
-    input I_rx, //
-    output O_tx, //
-    input start_pg, //
+    input I_rx, //  receive data by uart
+    output O_tx, // send data by uart
+    input start_pg, // used to start communcation mode
     
-    input [3:0] I_keyboard_cols, //
-    output [3:0] O_keyboard_rows, //
+    input [3:0] I_keyboard_cols, //keyboard
+    output [3:0] O_keyboard_rows, //keyboard
     
     output [23:0] O_leds, // leds
-    output [7:0] O_seg_en, // 
-    output [7:0] O_num //
+    output [7:0] O_seg_en, // seven segment digital tube enable signal
+    output [7:0] O_num // seven segment digital tube
 );  
 ```
 
@@ -317,12 +317,12 @@ module dmemory (
     input I_m_write, // memory write enable
     output [31:0] O_read_data, // data read from memory
   
-    input I_upg_rst, 
-    input I_upg_clk, 
-    input I_upg_wen, 
-    input [13:0] I_upg_adr, 
-    input [31:0] I_upg_dat, 
-    input I_upg_done 
+    input I_upg_rst, // UPG reset (Active High)
+    input I_upg_clk, //UPG ram_clk_i (10MHz)
+    input I_upg_wen, //UPG write enable
+    input [13:0] I_upg_adr, //UPG write address
+    input [31:0] I_upg_dat, //UPG write data
+    input I_upg_done //1 if programming is finished
 );
 ```
 
