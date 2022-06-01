@@ -3,12 +3,14 @@
 module wb_control(
     input [5:0] I_opcode,
     input [5:0] I_funct,
-    output O_reg_write
+    output O_reg_write,
+    output O_jal
 );
    instype ity_inst(
         .I_opcode(I_opcode),
         .I_funct(I_funct),
-        .O_reg_write(O_reg_write)
+        .O_reg_write(O_reg_write),
+        .O_jal(O_jal)
     );
 endmodule
 

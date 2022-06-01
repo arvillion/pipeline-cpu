@@ -271,7 +271,7 @@ module cpu(
        .I_rst(rst),
        .display(O_display),
        .I_cols(I_keyboard_cols),
-       .signal(O_signal),
+       .O_signal(O_signal),
        .O_rows(O_keyboard_rows)
     );
     wire signal_anti_shake;
@@ -301,15 +301,9 @@ module cpu(
         .I_commit(I_commit),
         .O_switches_value(switches)
     );
-    // wire [31:0] io_read_data = {8'b0, switches}; // TODO: switch the source of input
-    // reg [31:0] io_read_data_keyboard;
-    
-    wire [31:0] io_read_data = m_addr[15:12]==4'hf ? io_read_data_keyboard:{8'b0, switches};
-    wire [31:0] io_display = m_addr[15:12]==4'hf ? io_display_keyboard:{8'b0, switches};
 
-    wire [23:0] switches;
-    wire [31:0] io_read_data = m_addr[15:12]==4'he ? io_read_data_keyboard : {8'b0, switches};
-    wire [31:0] io_display = m_addr[15:12]==4'he ? io_display_keyboard:{8'b0, switches};
+    wire [31:0] io_read_data = m_addr[15:12]==4'hf ? io_read_data_keyboard : {8'b0, switches};
+    wire [31:0] io_display = m_addr[15:12]==4'hf ? io_display_keyboard:{8'b0, switches};
 
     mem mem_inst(
         .I_addr(mem_in_addr),
