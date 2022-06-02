@@ -331,13 +331,9 @@ module dmemory (
 ## Tests
 
 TODO: 以表格的方式罗列出测试方法（仿真、上板）、测试类型（单元、集成）、测试用例描述、测试结果（通过、不通过）；以及最终的测试结论。
-Task case for scene1：
-Task case for scene2：
-We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed above.
+We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed here.
 
-![image-20220601220303601](README.assets/image-20220601220303601.png)
-
-We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed above.
+We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed here.
 
 ## Summary
 
