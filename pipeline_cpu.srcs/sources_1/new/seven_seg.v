@@ -4,7 +4,7 @@ module seven_seg(
     input I_clk,
     input I_rst, 
     input I_write,
-    input [23:0] I_write_data,
+    input [31:0] I_write_data,
     output reg [7:0] O_num, 
     output reg [7:0] O_seg_en
     );

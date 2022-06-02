@@ -64,16 +64,16 @@ module cpu(
     input I_rst, // reset
     input [23:0] I_switches, // switches
     
-    input I_rx, //
-    output O_tx, //
-    input start_pg, //
+    input I_rx, //  receive data by uart
+    output O_tx, // send data by uart
+    input start_pg, // used to start communcation mode
     
-    input [3:0] I_keyboard_cols, //
-    output [3:0] O_keyboard_rows, //
+    input [3:0] I_keyboard_cols, //keyboard
+    output [3:0] O_keyboard_rows, //keyboard
     
     output [23:0] O_leds, // leds
-    output [7:0] O_seg_en, // 
-    output [7:0] O_num //
+    output [7:0] O_seg_en, // seven segment digital tube enable signal
+    output [7:0] O_num // seven segment digital tube
 );  
 ```
 
@@ -317,12 +317,12 @@ module dmemory (
     input I_m_write, // memory write enable
     output [31:0] O_read_data, // data read from memory
   
-    input I_upg_rst, 
-    input I_upg_clk, 
-    input I_upg_wen, 
-    input [13:0] I_upg_adr, 
-    input [31:0] I_upg_dat, 
-    input I_upg_done 
+    input I_upg_rst, // UPG reset (Active High)
+    input I_upg_clk, //UPG ram_clk_i (10MHz)
+    input I_upg_wen, //UPG write enable
+    input [13:0] I_upg_adr, //UPG write address
+    input [31:0] I_upg_dat, //UPG write data
+    input I_upg_done //1 if programming is finished
 );
 ```
 
@@ -331,6 +331,9 @@ module dmemory (
 ## Tests
 
 TODO: 以表格的方式罗列出测试方法（仿真、上板）、测试类型（单元、集成）、测试用例描述、测试结果（通过、不通过）；以及最终的测试结论。
+Task case for scene1：
+Task case for scene2：
+We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed above.
 
 ![image-20220601220303601](README.assets/image-20220601220303601.png)
 
