@@ -323,8 +323,6 @@ module led(
 
 #### dmemory
 
-TODO: upg
-
 ```verilog
 module dmemory (
     input I_clk, // cpu clock
@@ -341,7 +339,67 @@ module dmemory (
     input I_upg_done //1 if programming is finished
 );
 ```
+#### anti shake module for button:
 
+```verilog
+module anti_shake_single(
+input I_key,I_clk,I_rst_n,
+output O_key
+   );
+wire key_changed1;
+reg [20:0] count;
+// reg [2:0] count; // for simulation
+reg t1, t_locked1, t2, t_locked2;
+    always @(posedge I_clk or negedge I_rst_n)//let (t_locked1 = t1) at posedge of clock 
+if(~I_rst_n) t1 <= 0;
+else t1 <= I_key;
+    always @(posedge I_clk or negedge I_rst_n)//wait a cycle then let (t_locked1 = t1)
+if(~I_rst_n) t_locked1 <= 0;
+else t_locked1 <= t1;
+assign key_changed1 = ~t_locked1 & t1;//take the intersection of t1 and ~t_locked1, record whether the input value changes
+    always @(posedge I_clk or negedge I_rst_n)//count at the rising edge of each clock. If there is a change in the input value, clear the count
+if(~I_rst_n) count <= 0;
+else if(key_changed1) count <= 0;
+else count <= count + 1'b1;
+   always @(posedge I_clk or negedge I_rst_n)//The input value is assigned to T2 when the count accumulation reaches a certain time
+if(~I_rst_n) t2 <= 0;
+    else if(count == 2000000)//20ms or so
+// else if(count == 2) // for simulation
+t2 <= I_key;
+    always @(posedge I_clk or negedge I_rst_n)//wait a cycle then let (t_locked2 = t2)
+if(~I_rst_n) t_locked2 <= 0;
+else t_locked2 <= t2;
+assign O_key = ~t_locked2 & t2;//take the intersection of t2 and ~t_locked2, record whether the input value has changed as expected
+endmodule
+```
+
+
+#### keyboard_top
+
+```verilog
+module keyboard_top(
+    input I_clk_25M,//clock of 25M
+    input I_rst,//reset signal
+    input I_commit,//commit the current data to io read data
+    input [3:0] I_keyboard_cols,//keyboard
+    output [3:0] O_keyboard_rows,//keyboard
+    output [31:0] O_display,//the data showed in the seven segment tube
+    output [31:0] O_read_data//the data commit to io read data
+    );
+```
+
+#### seven _seg
+
+```verilog
+module seven_seg(
+    input I_clk,//clock
+    input I_rst,//reset
+    input I_write,//I write
+    input [31:0] I_write_data,//the data need to represent
+    output reg [7:0] O_num, //seven segment digital tube
+    output reg [7:0] O_seg_en//seven segment digital tube enable signal
+    );
+```
 
 
 ## Tests
