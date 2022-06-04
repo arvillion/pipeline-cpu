@@ -75,7 +75,14 @@ module cpu(
     
     output [23:0] O_leds, // leds
     output [7:0] O_seg_en, // seven segment digital tube enable signal
-    output [7:0] O_num // seven segment digital tube
+    output [7:0] O_num, // seven segment digital tube
+    
+    input I_clear, // button that clear the buffer of keyboard
+    input I_commit, // button that commits the buffer of keyboard
+
+    output O_hs, // hsync signal
+    output O_vs, // vsync signal
+    output [11:0] O_rgb444 // rgb
 );  
 ```
 
