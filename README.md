@@ -21,6 +21,8 @@ TODO: responsibility
 | v1.2.1  | May 24, 2022 | Fix the bugs for bne and beq                                 |
 | v1.3    | May 25, 2022 | Add support for mfhi, mflo, mthi, mtlo, mul, mulu            |
 | v1.4    | May 25, 2022 | Add support for uart                                         |
+| v1.5    | Jun 1, 2022  | Add support for 7-seg tube, keyboard and VGA                 |
+| v1.6    | Jun 2, 2022  | Final version                                                |
 
 ## Architecture
 
@@ -56,7 +58,14 @@ TODO: 外设io的寻址范围，寻址单位
 
 ## Ports
 
-TODO: CPU接口：时钟、复位、uart接口（可选）、其他常用IO接口使用说明。
+- clock
+- 4 buttons
+- 24 switches
+- 24 leds
+- 7-seg display
+- keyboard
+- uart
+- VGA
 
 ```verilog
 module cpu(
@@ -73,7 +82,14 @@ module cpu(
     
     output [23:0] O_leds, // leds
     output [7:0] O_seg_en, // seven segment digital tube enable signal
-    output [7:0] O_num // seven segment digital tube
+    output [7:0] O_num, // seven segment digital tube
+    
+    input I_clear, // button that clear the buffer of keyboard
+    input I_commit, // button that commits the buffer of keyboard
+
+    output O_hs, // hsync signal
+    output O_vs, // vsync signal
+    output [11:0] O_rgb444 // rgb
 );  
 ```
 
