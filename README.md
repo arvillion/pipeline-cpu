@@ -58,7 +58,14 @@ TODO: 外设io的寻址范围，寻址单位
 
 ## Ports
 
-TODO: CPU接口：时钟、复位、uart接口（可选）、其他常用IO接口使用说明。
+- clock
+- 4 buttons
+- 24 switches
+- 24 leds
+- 7-seg display
+- keyboard
+- uart
+- VGA
 
 ```verilog
 module cpu(
