@@ -336,8 +336,6 @@ module led(
 
 #### dmemory
 
-TODO: upg
-
 ```verilog
 module dmemory (
     input I_clk, // cpu clock
@@ -354,7 +352,76 @@ module dmemory (
     input I_upg_done //1 if programming is finished
 );
 ```
+#### anti shake module for button:
 
+```verilog
+module anti_shake_single(
+    input I_key,//input signal
+    input I_clk,//clock
+    input I_rst_n,//reset signal
+    output O_key//signal after anti shake treatment
+);
+```
+
+
+#### keyboard_top
+
+```verilog
+module keyboard_top(
+    input I_clk_25M, //clock of 25MHz
+    input I_rst, //reset signal
+    input I_commit, //commit the current data to io read data
+    input [3:0] I_keyboard_cols, //keyboard
+    output [3:0] O_keyboard_rows, //keyboard
+    output [31:0] O_display, //the data showed in the seven segment tube
+    output [31:0] O_read_data //the data commit to io read data
+);
+```
+
+#### seven_seg
+
+```verilog
+module seven_seg(
+    input I_clk, //clock
+    input I_rst, //reset
+    input I_write, //I write
+    input [31:0] I_write_data, //the data need to represent
+    output reg [7:0] O_num, //seven segment digital tube
+    output reg [7:0] O_seg_en //seven segment digital tube enable signal
+);
+```
+
+#### VGA
+
+```verilog
+module vga(
+    input I_clk_25M, // clock of 25MHz
+    input I_rst_n, // reset, negative active
+    output reg [11:0] O_rgb444, // rgb
+    output reg O_hs, // hsync
+    output reg O_vs, // vsync
+
+    input [11:0] I_pixel_data, // pixel data
+    output [9:0] O_pixel_x, // X coordinate
+    output [9:0] O_pixel_y // Y coordinate
+);
+```
+
+#### text_gen
+
+Generate text on screen using VGA text mode.
+
+```verilog
+module text_gen(
+    input I_clk, // clock
+    input [9:0] I_pixel_x, // X coordinate
+    input [9:0] I_pixel_y, // Y coordinate
+    output [11:0] O_pixel_data, // pixel data
+
+    output [11:0] O_vga_ram_addr, // vga ram address
+    input [15:0] I_vga_ram_data // data from vga ram
+);
+```
 
 
 ## Tests
