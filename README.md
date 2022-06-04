@@ -21,6 +21,8 @@ TODO: responsibility
 | v1.2.1  | May 24, 2022 | Fix the bugs for bne and beq                                 |
 | v1.3    | May 25, 2022 | Add support for mfhi, mflo, mthi, mtlo, mul, mulu            |
 | v1.4    | May 25, 2022 | Add support for uart                                         |
+| v1.5    | Jun 1, 2022  | Add support for 7-seg tube, keyboard and VGA                 |
+| v1.6    | Jun 2, 2022  | Final version                                                |
 
 ## Architecture
 
