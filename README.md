@@ -331,9 +331,21 @@ module dmemory (
 ## Tests
 
 TODO: 以表格的方式罗列出测试方法（仿真、上板）、测试类型（单元、集成）、测试用例描述、测试结果（通过、不通过）；以及最终的测试结论。
-We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed here.
 
-We use the input as the test case and put them into the set0. After using the tasks from 0 to 7,  the true value we want to get is listed here.
+| num  | method                  | type      | describe       | result |
+| ---- | ----------------------- | --------- | -------------- | ------ |
+| 1    | using development board | integrate | test case 1    | pass   |
+| 2    | using development board | integrate | test case 2    | pass   |
+| 3    | using development board | integrate | test for mult  | pass   |
+| 4    | using development board | integrate | test for multu | pass   |
+| 5    | using development board | unit      | test for stall | pass   |
+|      |                         |           |                |        |
+
+We pass the test case 1 and test case 2 to check the basic function for the CPU and corresponding IO devices. After that, we test the additional ISA include  `mfhi`, `mflo`, `mthi`, `mtlo`, `mult`, `multu`. In the end, we use unit test to check the stall function for the pipeline CPU.
+
+All in all, all the output of the tests is the same with our expectation.
+
+
 
 ## Summary
 
