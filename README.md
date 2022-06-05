@@ -439,10 +439,18 @@ All in all, all the output of the tests is the same with our expectation.
 
 ## Summary
 
-
-
 - How to schedule the timing of the pipeline cpu?
   
   There are 5 stages in the pipeline design. Our solution is that operations that needs to be performed in each stage are promised to complete in the first half cycle. And then outputs of the current stage will be passed to the next stage at `negedge`.
   
-- 
+- The shaking sign from switches and mini keyboard will make bug
+
+  We use a button to  “commit” the information from the input devices to the CPU.
+
+  If the commit button is hit, the information stored in the input device will commit to the CPU.
+
+   If the commit button has not  been hit, the information from the input device to the CPU will be the same with the last information was sent to the CPU
+
+- It is hard to debug for asm files
+
+  We use the thought like unit test to debug. We first test separate function in the asm and then find the location the bug. 
