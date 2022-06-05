@@ -414,16 +414,11 @@ module text_gen(
 );
 ```
 
-<<<<<<< HEAD
-## Tests
-
-=======
 ![](https://s3.bmp.ovh/imgs/2022/06/05/5b134240c624b107.png)
 
 
 ## Tests
 
->>>>>>> 2cc8087168419a700498fd857691f06b6655a1a9
 | num  | method                  | type      | describe       | result |
 | ---- | ----------------------- | --------- | -------------- | ------ |
 | 1    | using development board | integrate | test case 1    | pass   |
