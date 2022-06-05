@@ -48,7 +48,7 @@ Instruction memory: 64kb
 
 Data memory: 64kb
 
-Address byte: byte
+Address unit: byte
 
 Address for IO:
 
