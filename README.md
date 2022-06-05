@@ -423,10 +423,7 @@ module text_gen(
 );
 ```
 
-
 ## Tests
-
-TODO: 以表格的方式罗列出测试方法（仿真、上板）、测试类型（单元、集成）、测试用例描述、测试结果（通过、不通过）；以及最终的测试结论。
 
 | num  | method                  | type      | describe       | result |
 | ---- | ----------------------- | --------- | -------------- | ------ |
@@ -445,7 +442,7 @@ All in all, all the output of the tests is the same with our expectation.
 
 ## Summary
 
-TODO: 问题及总结：开发过程中遇到的问题、思考、总结
+
 
 
 
