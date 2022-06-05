@@ -106,13 +106,6 @@ module cpu(
 
 ## Structure
 
-TODO:
-
-CPU内部结构
-
-- CPU内部各子模块的接口连接关系图 
-- CPU内部子模块的设计说明（模块功能、端口规格及功能说明）
-
 #### ifetch
 
 This module makes a prediction for the coming pc value.
@@ -420,6 +413,8 @@ module text_gen(
     input [15:0] I_vga_ram_data // data from vga ram
 );
 ```
+
+![](https://s3.bmp.ovh/imgs/2022/06/05/5b134240c624b107.png)
 
 
 ## Tests
