@@ -52,14 +52,14 @@ Address unit: byte
 
 Address for IO:
 
-| IO name        | type   | range                | function                                                     |      |
-| -------------- | ------ | -------------------- | ------------------------------------------------------------ | ---- |
-| switches       | input  | FFFF FXXX$^1$        | input the bits CPU needs read                                |      |
-| mini keyboard  | input  | FFFF EXXX            | input the bits CPU needs read                                |      |
-| led            | output | FFFF FXXX            | show the data from CPU                                       |      |
-| 7 segment tube | output | FFFF FXXX            | show the data of the mini keyboard                           |      |
-| VGA            | output | FFFF F000 ~FFFF F960 | show more data from CPU with  promotion hint and stored data for test case |      |
-|                |        |                      |                                                              |      |
+| IO name        | type   | range                | function                                                     |
+| -------------- | ------ | -------------------- | ------------------------------------------------------------ |
+| switches       | input  | FFFF FXXX$^1$        | input the bits CPU needs read                                |
+| mini keyboard  | input  | FFFF EXXX            | input the bits CPU needs read                                |
+| led            | output | FFFF FXXX            | show the data from CPU                                       |
+| 7 segment tube | output | FFFF FXXX            | show the data of the mini keyboard                           |
+| VGA            | output | FFFF F000 ~FFFF F960 | show more data from CPU with  promotion hint and stored data for test case |
+|                |        |                      |                                                              |
 
 $^1$ X  means don’t care 
 
