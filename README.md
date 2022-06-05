@@ -2,8 +2,6 @@
 
 ## Developers
 
-TODO: responsibility
-
 | No       | Name        | Responsibility              | Contributions |
 | -------- | ----------- | --------------------------- | ------------- |
 | 12010704 | Zhang Zekai | main architecture, pipeline | 33.3333333%   |
@@ -48,18 +46,18 @@ Instruction memory: 64kb
 
 Data memory: 64kb
 
-Address byte: byte
+Address unit: byte
 
 Address for IO:
 
-| IO name        | type   | range                | function                                                     |      |
-| -------------- | ------ | -------------------- | ------------------------------------------------------------ | ---- |
-| switches       | input  | FFFF FXXX$^1$        | input the bits CPU needs read                                |      |
-| mini keyboard  | input  | FFFF EXXX            | input the bits CPU needs read                                |      |
-| led            | output | FFFF FXXX            | show the data from CPU                                       |      |
-| 7 segment tube | output | FFFF FXXX            | show the data of the mini keyboard                           |      |
-| VGA            | output | FFFF F000 ~FFFF F960 | show more data from CPU with  promotion hint and stored data for test case |      |
-|                |        |                      |                                                              |      |
+| IO name        | type   | range                | function                                                     |
+| -------------- | ------ | -------------------- | ------------------------------------------------------------ |
+| switches       | input  | FFFF FXXX$^1$        | input the bits CPU needs read                                |
+| mini keyboard  | input  | FFFF EXXX            | input the bits CPU needs read                                |
+| led            | output | FFFF FXXX            | show the data from CPU                                       |
+| 7 segment tube | output | FFFF FXXX            | show the data of the mini keyboard                           |
+| VGA            | output | FFFF F000 ~FFFF F960 | show more data from CPU with  promotion hint and stored data for test case |
+|                |        |                      |                                                              |
 
 $^1$ X  means don’t care 
 
@@ -107,13 +105,6 @@ module cpu(
 ```
 
 ## Structure
-
-TODO:
-
-CPU内部结构
-
-- CPU内部各子模块的接口连接关系图 
-- CPU内部子模块的设计说明（模块功能、端口规格及功能说明）
 
 #### ifetch
 
@@ -423,8 +414,16 @@ module text_gen(
 );
 ```
 
+<<<<<<< HEAD
 ## Tests
 
+=======
+![](https://s3.bmp.ovh/imgs/2022/06/05/5b134240c624b107.png)
+
+
+## Tests
+
+>>>>>>> 2cc8087168419a700498fd857691f06b6655a1a9
 | num  | method                  | type      | describe       | result |
 | ---- | ----------------------- | --------- | -------------- | ------ |
 | 1    | using development board | integrate | test case 1    | pass   |
@@ -438,13 +437,12 @@ We pass the test case 1 and test case 2 to check the basic function for the CPU 
 
 All in all, all the output of the tests is the same with our expectation.
 
-
-
 ## Summary
 
 
 
-
-
-
-
+- How to schedule the timing of the pipeline cpu?
+  
+  There are 5 stages in the pipeline design. Our solution is that operations that needs to be performed in each stage are promised to complete in the first half cycle. And then outputs of the current stage will be passed to the next stage at `negedge`.
+  
+- 
