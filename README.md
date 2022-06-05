@@ -2,8 +2,6 @@
 
 ## Developers
 
-TODO: responsibility
-
 | No       | Name        | Responsibility              | Contributions |
 | -------- | ----------- | --------------------------- | ------------- |
 | 12010704 | Zhang Zekai | main architecture, pipeline | 33.3333333%   |
@@ -443,7 +441,7 @@ All in all, all the output of the tests is the same with our expectation.
 
 TODO: 问题及总结：开发过程中遇到的问题、思考、总结
 
-- How to schedule the timing of the pipeline cpu?\\
+- How to schedule the timing of the pipeline cpu?
   
   There are 5 stages in the pipeline design. Our solution is that operations that needs to be performed in each stage are promised to complete in the first half cycle. And then outputs of the current stage will be passed to the next stage at `negedge`.
   
