@@ -426,8 +426,6 @@ module text_gen(
 
 ## Tests
 
-TODO: 以表格的方式罗列出测试方法（仿真、上板）、测试类型（单元、集成）、测试用例描述、测试结果（通过、不通过）；以及最终的测试结论。
-
 | num  | method                  | type      | describe       | result |
 | ---- | ----------------------- | --------- | -------------- | ------ |
 | 1    | using development board | integrate | test case 1    | pass   |
@@ -441,13 +439,12 @@ We pass the test case 1 and test case 2 to check the basic function for the CPU 
 
 All in all, all the output of the tests is the same with our expectation.
 
-
-
 ## Summary
 
 TODO: 问题及总结：开发过程中遇到的问题、思考、总结
 
-
-
-
-
+- How to schedule the timing of the pipeline cpu?\\
+  
+  There are 5 stages in the pipeline design. Our solution is that operations that needs to be performed in each stage are promised to complete in the first half cycle. And then outputs of the current stage will be passed to the next stage at `negedge`.
+  
+- 
